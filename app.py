@@ -28,7 +28,7 @@ class Logs(db.Model):
 
 @app.route("/webhook", methods=['POST'])
 def webhook_counter():
-    payload = request.get_json()
+    payload = request.form
     type = payload['type']
 
     obj = Logs(type)
