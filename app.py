@@ -58,7 +58,7 @@ def current():
 
     return render_template(
             'index.html', person=obj['Person'], team=obj['Team'],
-            current=datestring, all=(obj['Person']+obj['Team']))
+            current=datestring, all=(obj['Person']+obj['Team']*4))
 
 
 if __name__ == "__main__":
