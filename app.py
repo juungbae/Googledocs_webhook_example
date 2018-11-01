@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 import enum
 from datetime import datetime
 from uuid import uuid4
+import json
 
 
 app = Flask(__name__, static_url_path='')
@@ -28,8 +29,8 @@ class Logs(db.Model):
 
 @app.route("/webhook", methods=['POST'])
 def webhook_counter():
-    payload = request.get_data()
-    print(payload)
+    payload = request.form.get('payload')
+    payload = json.loads(payload)
     type = payload['type']
 
     obj = Logs(type)
