@@ -28,7 +28,8 @@ class Logs(db.Model):
 
 @app.route("/webhook", methods=['POST'])
 def webhook_counter():
-    payload = request.form
+    payload = request.get_data()
+    print(payload)
     type = payload['type']
 
     obj = Logs(type)
@@ -56,7 +57,7 @@ def current():
 
     return render_template(
             'index.html', person=obj['Person'], team=obj['Team'],
-            current=datestring, all=(obj['Person']+obj['Team']*4))
+            current=datestring, all=(obj['Person']+obj['Team']))
 
 
 if __name__ == "__main__":
