@@ -1,15 +1,21 @@
 from flask import Flask, request, render_template
-from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import Column, String, Enum, DateTime
+from sqlalchemy.ext.declarative import declarative_base
 import enum
 from datetime import datetime
 from uuid import uuid4
 import json
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from flask_sqlalchemy_session import flask_scoped_session
 
 
 app = Flask(__name__, static_url_path='')
-app.config['SQLALCHEMY_DATABASE_URI'] = \
-    'mysql+pymysql://hack:1234@localhost/hack'
-db = SQLAlchemy(app)
+uri = 'mysql+pymysql://hack:1234@localhost/hack'
+engine = create_engine(uri)
+session_factory = sessionmaker(bind=engine)
+Base = declarative_base()
+session = flask_scoped_session(session_factory, app)
 
 
 class Type(enum.Enum):
@@ -17,10 +23,11 @@ class Type(enum.Enum):
     team = "Team"
 
 
-class Logs(db.Model):
-    id = db.Column(db.String(32), primary_key=True)
-    type = db.Column(db.Enum(Type), nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.now, nullable=False)
+class Logs(Base):
+    __tablename__ = "logs"
+    id = Column(String(32), primary_key=True)
+    type = Column(Enum(Type), nullable=False)
+    timestamp = Column(DateTime, default=datetime.now, nullable=False)
 
     def __init__(self, type):
         self.id = str(uuid4()).replace('-', '')
@@ -34,15 +41,15 @@ def webhook_counter():
     type = payload['type']
 
     obj = Logs(type)
-    db.session.add(obj)
-    db.session.commit()
+    session.add(obj)
+    session.commit()
 
     return "{ \"message\" : \"success\"}"
 
 
 @app.route("/")
 def current():
-    query_result = db.session.query(Logs).all()
+    query_result = session.query(Logs).all()
     obj = {
         "Person": 0,
         "Team": 0
@@ -58,9 +65,8 @@ def current():
 
     return render_template(
             'index.html', person=obj['Person'], team=obj['Team'],
-            current=datestring, all=(obj['Person']+obj['Team']*4))
+            current=datestring, all=(obj['Person']+obj['Team']))
 
 
 if __name__ == "__main__":
-    db.create_all()
     app.run(port=8901, debug=True)
